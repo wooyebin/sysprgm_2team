@@ -13,6 +13,7 @@
 void * handle_clnt(void * arg);
 void send_msg(char * msg, int len);
 void error_handling(char * msg);
+int command_detection(char*);
 
 int clnt_cnt=0;
 int clnt_socks[MAX_CLNT];
@@ -65,9 +66,9 @@ void * handle_clnt(void * arg)
 	int str_len=0, i;
 	char msg[BUF_SIZE];
 	
-	while((str_len=read(clnt_sock, msg, sizeof(msg)))!=0)
+	while((str_len=read(clnt_sock, msg, sizeof(msg)))!=0){
 		send_msg(msg, str_len);
-	
+	}
 	pthread_mutex_lock(&mutx);
 	for(i=0; i<clnt_cnt; i++)   // remove disconnected client
 	{
@@ -86,11 +87,31 @@ void * handle_clnt(void * arg)
 void send_msg(char * msg, int len)   // send to all
 {
 	int i;
+
+	int commandNum = command_detection(msg);
+	if(commandNum == 1) printf("NOTICE\n");
 	pthread_mutex_lock(&mutx);
 	for(i=0; i<clnt_cnt; i++)
 		write(clnt_socks[i], msg, len);
 	pthread_mutex_unlock(&mutx);
 }
+
+int command_detection(char* msg){
+	char* command = "notice ";
+	int i=0, j=0;
+	while(msg[i] != ']') i++;
+	i += 2;
+	while(msg[i] == command[j]){
+		i++; j++;
+	}
+	if ( j==7){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
+
 void error_handling(char * msg)
 {
 	fputs(msg, stderr);
