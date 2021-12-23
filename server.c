@@ -22,11 +22,15 @@ void chat_start(int*);
 void * handle_clnt(void * arg);
 void send_msg(char * msg, int len);
 void error_handling(char * msg);
-//int command_detection(char*);
+int command_detection(char*);
 
 int port;
 int clnt_cnt=0;
 int clnt_socks[MAX_CLNT];
+char room_name[10][10];
+char room_member[10][10][10];
+int room_mem[10] = {0, };
+int room_num=0;
 pthread_mutex_t mutx;
 
 int main(int argc, char *argv[])
@@ -86,9 +90,41 @@ void chat_start(int* serv_sock){
 void * handle_clnt(void * arg)
 {
 	int clnt_sock=*((int*)arg);
-	int str_len=0, i;
+	int str_len=0, i, j;
 	char msg[BUF_SIZE];
-	
+	str_len=read(clnt_sock, msg, sizeof(msg));
+	int commandNum = command_detection(msg);
+	if(commandNum == 1){
+		str_len=read(clnt_sock, msg, sizeof(msg));
+		str_len=read(clnt_sock, msg, sizeof(msg));
+		char *makingRoomName =strtok(msg, " ");
+		strcpy(room_member[room_num][room_mem[room_num]],makingRoomName);
+		makingRoomName = strtok(NULL, " ");
+		strcpy(room_name[room_num], makingRoomName);
+		room_mem[room_num] ++;
+		room_num++;
+	}
+	else if(commandNum == 2){
+		char roomlist[4096];
+		char temp[1024];
+		strcpy(roomlist, "num | room name(mem num) | room members\n");
+		for(i=0; i<room_num; i++){
+			sprintf(temp, "%d) %s(%d) ", i, room_name[i], room_mem[i]);
+			strcat(roomlist, temp);
+			for(j=0; j<room_mem[i]; j++){
+				sprintf(temp, "%s ", room_member[i][j]);
+				strcat(roomlist, temp);
+			}
+			strcat(roomlist, "\n");
+		}
+		send_msg(roomlist, strlen(roomlist));
+		str_len=read(clnt_sock, msg, sizeof(msg));
+		int room = command_detection(msg);
+		strcpy(room_member[room][room_mem[room]], strtok(msg," "));
+		room_mem[room] ++;
+		str_len=read(clnt_sock, msg, sizeof(msg));
+	}
+	//else
 	while((str_len=read(clnt_sock, msg, sizeof(msg)))!=0){
 		send_msg(msg, str_len);
 	}
@@ -107,26 +143,13 @@ void * handle_clnt(void * arg)
 	close(clnt_sock);
 	return NULL;
 }
-void send_msg(char * msg, int len)   // send to all
-{
-	int i;
-/*	int commandNum = command_detection(msg);
-	if(commandNum == 1){
-		strcpy(msg, "notice is uploaded");
-		len = strlen(msg);
-	}*/
-	pthread_mutex_lock(&mutx);
-	for(i=0; i<clnt_cnt; i++)
-		write(clnt_socks[i], msg, len);
-	pthread_mutex_unlock(&mutx);
-}
-/*
+
 int command_detection(char* msg){
-	char* command = "notice ";
+//	char* command = "notice ";
 	int i=0, j=0;
 	while(msg[i] != ']') i++;
 	i += 2;
-	while(msg[i] == command[j]){
+/*	while(msg[i] == command[j]){
 		i++; j++;
 	}
 	if ( j==7){
@@ -135,8 +158,19 @@ int command_detection(char* msg){
 	else{
 		return 0;
 	}
-}
 */
+	return msg[i] - 48;
+}
+
+
+void send_msg(char * msg, int len)   // send to all
+{
+	int i;
+	pthread_mutex_lock(&mutx);
+	for(i=0; i<clnt_cnt; i++)
+		write(clnt_socks[i], msg, len);
+	pthread_mutex_unlock(&mutx);
+}
 void error_handling(char * msg)
 {
 	fputs(msg, stderr);

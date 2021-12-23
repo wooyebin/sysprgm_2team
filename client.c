@@ -17,6 +17,7 @@
 
 void init(int, char**);
 void socket_init(int*);
+void show_menu(char*, int);
 void chat_start(int*);
 void * send_msg(void * arg);
 void * recv_msg(void * arg);
@@ -29,6 +30,7 @@ char IP[20];
 int port;
 char name[NAME_SIZE] = "[DEFAULT]";
 char msg[BUF_SIZE];
+int room=0;
 
 //자리 비움 관련된 것임
 char disturb[300][300]={"\0"};
@@ -44,6 +46,7 @@ int main(int argc, char *argv[])
 	int sock;
 	init(argc, argv);
 	socket_init(&sock);
+	show_menu(name, sock);
 	chat_start(&sock);
 	close(sock);  
 	return 0;
@@ -76,6 +79,33 @@ void socket_init(int* sock){
 	if(connect(*sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==-1)
 		error_handling("connect() error");
 }
+
+void show_menu(char* name, int sock){
+	int menu, str_len;
+	char makingRoomName[10];
+	char name_msg[NAME_SIZE+5];
+	printf("1. GENERATE chatting room.\n");
+	printf("2. ENTER the chatting room.\n");
+	printf("3. Quit.\n");
+	printf("4. help\n");
+	scanf("%d", &menu);
+	sprintf(name_msg, "%s %d", name, menu);
+	write(sock, name_msg, strlen(name_msg));
+	if ( menu == 1 ){
+		fgets(makingRoomName, 10, stdin);
+		printf("%s\n", makingRoomName);
+		write(sock, name_msg, strlen(name_msg));
+	}
+	else if ( menu == 2){
+		str_len=read(sock, name_msg, NAME_SIZE+BUF_SIZE-1);
+		printf("%s", name_msg);
+		printf("\nwhat\n");
+		scanf("%d", &room);
+		sprintf(name_msg, "%s %d", name, room);
+		write(sock, name_msg, strlen(name_msg));
+	}
+}
+
 //초기화
 
 
@@ -149,7 +179,7 @@ void make_msg(char* msg, char* name_msg){
 	}
 	//그 외는 다 입력시킴
 	else{
-		sprintf(name_msg,"%s %s", name, msg);
+		sprintf(name_msg,"%d%s %s", room, name, msg);
 	}
 }
 
@@ -165,19 +195,20 @@ void * recv_msg(void * arg)   // read thread main
 		if(str_len==-1) 
 			return (void*)-1;
 		name_msg[str_len]=0;
-		
-		if(strstr(name_msg,"notice"))
-		{
-			strcpy(noticebuffer,name_msg);	
-		}
-		//afk_mode가 1이라서 자리비움 배열에 메시지 온것 저장함
-		if(afk_mode ==1)
-		{
-		  strcpy(disturb[i],name_msg);
-		  i++;
-		}
-		else{
-			fputs(name_msg, stdout);
+		if(name_msg[0]-48 == room){
+			if(strstr(name_msg,"notice"))
+			{
+				strcpy(noticebuffer,name_msg);	
+			}
+			//afk_mode가 1이라서 자리비움 배열에 메시지 온것 저장함
+			if(afk_mode ==1)
+			{
+			  strcpy(disturb[i],name_msg);
+			  i++;
+			}
+			else{
+				fputs(name_msg, stdout);
+			}
 		}
 	}
 	return NULL;
