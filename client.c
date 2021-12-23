@@ -22,12 +22,21 @@ void * send_msg(void * arg);
 void * recv_msg(void * arg);
 void error_handling(char * msg);
 
-
+int checkmsg(char*);
+void make_msg(char*, char*);
 
 char IP[20];
 int port;
 char name[NAME_SIZE] = "[DEFAULT]";
 char msg[BUF_SIZE];
+
+//자리 비움 관련된 것임
+char disturb[300][300]={"\0"};
+int i=0;
+int afk_mode =0;
+
+//공지 사항
+char noticebuffer[300];
 
 
 int main(int argc, char *argv[])
@@ -67,6 +76,8 @@ void socket_init(int* sock){
 	if(connect(*sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==-1)
 		error_handling("connect() error");
 }
+//초기화
+
 
 void chat_start(int* sock){
 	pthread_t snd_thread, rcv_thread;
@@ -79,6 +90,33 @@ void chat_start(int* sock){
 	pthread_join(rcv_thread, &thread_return);
 }
 
+int msgcheck(char* msg)
+{
+	if (!strcmp(msg, "afk\n"))
+	{
+		afk_mode = 1;
+		return 1;
+	}
+	else if (!strcmp(msg, "nafk\n"))
+	{
+		for (int j = 0;j<i;j++)
+		{
+			fputs(disturb[j], stdout);
+		}
+		i = 0;
+		afk_mode = 0;
+		return 1;
+	}
+	else if ( !strcmp(msg,"notice\n") ){
+		fputs(noticebuffer,stdout);
+		return 2;
+	}
+	else if ( !strcmp(msg,"q\n")||!strcmp(msg,"Q\n") ){
+		return -1;
+	}
+
+	else{return 0;}
+}
 
 void * send_msg(void * arg)   // send thread main
 {
@@ -87,17 +125,35 @@ void * send_msg(void * arg)   // send thread main
 	while(1) 
 	{
 		fgets(msg, BUF_SIZE, stdin);
-		if(!strcmp(msg,"q\n")||!strcmp(msg,"Q\n")) 
-		{
+		int msgcheckNum = msgcheck(msg);
+		//notice 치면 공지사항 나옴
+		//자리 비움을 위한 함수이다.
+		if(msgcheckNum == 2 || msgcheckNum == 1){
+			continue;
+		}
+		if(msgcheckNum == -1){
 			close(sock);
 			exit(0);
 		}
-		sprintf(name_msg,"%s %s", name, msg);
-		write(sock, name_msg, strlen(name_msg));
+		make_msg(msg, name_msg);
+		write(sock, name_msg, strlen(name_msg));		
 	}
 	return NULL;
 }
-	
+
+void make_msg(char* msg, char* name_msg){
+	//notice가 들어가면 이름 빼고 서버로 입력시키는 것
+	if(strstr(msg,"notice"))
+	{
+		sprintf(name_msg,"%s",msg);	
+	}
+	//그 외는 다 입력시킴
+	else{
+		sprintf(name_msg,"%s %s", name, msg);
+	}
+}
+
+
 void * recv_msg(void * arg)   // read thread main
 {
 	int sock=*((int*)arg);
@@ -109,7 +165,20 @@ void * recv_msg(void * arg)   // read thread main
 		if(str_len==-1) 
 			return (void*)-1;
 		name_msg[str_len]=0;
-		fputs(name_msg, stdout);
+		
+		if(strstr(name_msg,"notice"))
+		{
+			strcpy(noticebuffer,name_msg);	
+		}
+		//afk_mode가 1이라서 자리비움 배열에 메시지 온것 저장함
+		if(afk_mode ==1)
+		{
+		  strcpy(disturb[i],name_msg);
+		  i++;
+		}
+		else{
+			fputs(name_msg, stdout);
+		}
 	}
 	return NULL;
 }
