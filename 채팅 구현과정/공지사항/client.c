@@ -165,13 +165,16 @@ void * recv_msg(void * arg)   // read thread main
 			strcpy(noticebuffer,name_msg);	
 		}
 		//afk_mode가 1이라서 자리비움 배열에 메시지 온것 저장함
-		if(afk_mode ==1)
+		else
 		{
-		  strcpy(disturb[i],name_msg);
-		  i++;
-		}
-		else{
-			fputs(name_msg, stdout);
+			if(afk_mode ==1)
+			{
+		  		strcpy(disturb[i],name_msg);
+		  		i++;
+			}
+			else{
+				fputs(name_msg, stdout);
+			}
 		}
 	}
 	return NULL;
