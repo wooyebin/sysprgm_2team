@@ -15,6 +15,16 @@
 
 #define BUF_SIZE 100
 #define MAX_CLNT 256
+#define ROOMCOUNT 10
+#define PORTNUMBER "9000"
+
+typedef struct {
+    char roomName[20]; //chatroom name
+    int cnt; //people count
+    int roomnum; //chatroom portnum
+    int option; //to check enter or make room
+    int clnt_socks[ROOMCOUNT];
+}roominfo;
 
 void init(int, char**);
 void socket_init(int*);
@@ -23,6 +33,8 @@ void * handle_clnt(void * arg);
 void send_msg(char * msg, int len);
 void error_handling(char * msg);
 int command_detection(char*);
+void option1(int, roominfo, int);
+int option2(int, roominfo, int);
 
 int port;
 int clnt_cnt=0;
@@ -32,6 +44,10 @@ char room_member[10][10][10];
 int room_mem[10] = {0, };
 int room_num=0;
 pthread_mutex_t mutx;
+
+int roomnum = 0;
+roominfo info[ROOMCOUNT];
+
 
 int main(int argc, char *argv[])
 {
@@ -89,11 +105,47 @@ void chat_start(int* serv_sock){
 
 void * handle_clnt(void * arg)
 {
+	roominfo presentinfo;
 	int clnt_sock=*((int*)arg);
 	int str_len=0, i, j;
+	int fd_num;
+	struct timeval timeout;
 	char msg[BUF_SIZE];
-	str_len=read(clnt_sock, msg, sizeof(msg));
-	int commandNum = command_detection(msg);
+	fd_set fd2;
+
+	timeout.tv_sec = 3;
+	 timeout.tv_usec = 3000;
+
+	FD_ZERO(&fd2);
+	FD_SET(clnt_sock, &fd2);
+
+	if((fd_num = select(clnt_sock+1, 0, &fd2, 0, &timeout)) > 0){
+		str_len = read(clnt_sock, (void*)&presentinfo, BUF_SIZE);
+
+		if(str_len == 0){			
+			printf("close client : %d", clnt_sock);
+		}
+		
+		if((str_len >0) && presentinfo.option == 1){
+			//for debugging
+			printf("for test sendinfo success\n");		             		
+			option1(clnt_sock, presentinfo, str_len);	
+		}
+		else if((str_len >0) &&(presentinfo.option == 2)){
+			//for debugging
+			printf("for test checkinfo success\n");		             		
+			if(option2(clnt_sock, presentinfo, str_len) > 0){
+				printf("room name search success\n");
+			}
+			else{
+				printf("room name search failure\n");
+			}
+			
+		}  
+		printf("\n");
+	}
+
+/*
 	if(commandNum == 1){
 		str_len=read(clnt_sock, msg, sizeof(msg));
 		str_len=read(clnt_sock, msg, sizeof(msg));
@@ -124,6 +176,7 @@ void * handle_clnt(void * arg)
 		room_mem[room] ++;
 		str_len=read(clnt_sock, msg, sizeof(msg));
 	}
+*/
 	//else
 	while((str_len=read(clnt_sock, msg, sizeof(msg)))!=0){
 		send_msg(msg, str_len);
@@ -162,6 +215,39 @@ int command_detection(char* msg){
 	return msg[i] - 48;
 }
 
+void option1(int clnt_sock, roominfo rinfo, int len){
+	int i;
+	int send_roomnum;
+	pthread_mutex_lock(&mutx);       
+
+	//count up roomnum
+	send_roomnum = roomnum;
+	rinfo.roomnum = send_roomnum;
+	rinfo.cnt = 1;
+	rinfo.clnt_socks[rinfo.cnt-1] = clnt_sock;
+	info[roomnum] = rinfo;
+	write(clnt_sock, (void*)&rinfo, sizeof(rinfo));
+    
+	roomnum++;
+	pthread_mutex_unlock(&mutx);
+}
+
+int option2(int clnt_sock ,roominfo rinfo, int len){
+	int i;
+	for(i = 0; i< ROOMCOUNT; i++){
+		//have to check this can be error
+		if(strcmp(info[i].roomName, rinfo.roomName) == 0){				     rinfo.roomnum = i;
+			info[i].cnt++;
+			rinfo.cnt = info[i].cnt;
+			rinfo.clnt_socks[rinfo.cnt-1] = clnt_sock;
+			write(clnt_sock, (void*)&rinfo, sizeof(rinfo));
+			return 1;
+		}
+	}
+	rinfo.roomnum = -1;
+	write(clnt_sock, (void*)&rinfo, sizeof(rinfo));
+	return -1;
+}
 
 void send_msg(char * msg, int len)   // send to all
 {
