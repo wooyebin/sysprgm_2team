@@ -29,7 +29,6 @@ void init(int, char**);
 void socket_init(int*);
 void logInPage(int sock);
 void showmenu(int sock);
-//void show_menu(char*, int);
 void chat_start(int*);
 void * send_msg(void * arg);
 void * recv_msg(void * arg);
@@ -65,7 +64,6 @@ int main(int argc, char *argv[])
 	int sock;
 	init(argc, argv);
 	socket_init(&sock);
-	//show_menu(name, sock);
 	logInPage(sock);
 	chat_start(&sock);
 	close(sock);  
@@ -99,38 +97,11 @@ void socket_init(int* sock){
 	if(connect(*sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==-1)
 		error_handling("connect() error");
 }
-/*
-void show_menu(char* name, int sock){
-	int menu, str_len;
-	char makingRoomName[10];
-	char name_msg[NAME_SIZE+5];
-	printf("1. GENERATE chatting room.\n");
-	printf("2. ENTER the chatting room.\n");
-	printf("3. Quit.\n");
-	printf("4. help\n");
-	scanf("%d", &menu);
-	sprintf(name_msg, "%s %d", name, menu);
-	write(sock, name_msg, strlen(name_msg));
-	if ( menu == 1 ){
-		fgets(makingRoomName, 10, stdin);
-		printf("%s\n", makingRoomName);
-		write(sock, name_msg, strlen(name_msg));
-	}
-	else if ( menu == 2){
-		str_len=read(sock, name_msg, NAME_SIZE+BUF_SIZE-1);
-		printf("%s", name_msg);
-		printf("\nwhat\n");
-		scanf("%d", &room);
-		sprintf(name_msg, "%s %d", name, room);
-		write(sock, name_msg, strlen(name_msg));
-	}
-}
-*/
 void logInPage(int sock){
 
     //enter NickName    
-    printf("Show your NickName : ");
-    fgets(name, BUF_SIZE, stdin);
+    //printf("Show your NickName : ");
+    //fgets(name, BUF_SIZE, stdin);
 
     showmenu(sock);
 }
@@ -209,7 +180,7 @@ void createRoom(int sock, roominfo rinfo){
     }
 
     // for testing
-    printf("recv roomnum : %d", rinfo.roomnum);        
+    printf("recv roomnum : %d\n", rinfo.roomnum);        
     // because it is tcp, we have two option 1,2
     
 
@@ -244,7 +215,7 @@ void enterRoom(int sock){
         printf("this chatting room name is not in room information.\n"); 
     }
     else{
-        printf("write to chatclnt roomnum : %d ", sendinfo.roomnum);     
+        printf("write to chatclnt roomnum : %d \n", sendinfo.roomnum);     
     }
     
     //close(sock);
@@ -340,7 +311,8 @@ void * recv_msg(void * arg)   // read thread main
 		str_len=read(sock, name_msg, NAME_SIZE+BUF_SIZE-1);
 		if(str_len==-1) 
 			return (void*)-1;
-		name_msg[str_len]=0;
+			name_msg[str_len]=0;
+			
 		//if(name_msg[0]-48 == room){
 			if(strstr(name_msg,"notice"))
 			{

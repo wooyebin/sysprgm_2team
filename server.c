@@ -177,7 +177,7 @@ void * handle_clnt(void * arg)
 		str_len=read(clnt_sock, msg, sizeof(msg));
 	}
 */
-	//else
+	str_len=read(clnt_sock, msg, sizeof(msg));
 	while((str_len=read(clnt_sock, msg, sizeof(msg)))!=0){
 		send_msg(msg, str_len, clnt_sock);
 	}
