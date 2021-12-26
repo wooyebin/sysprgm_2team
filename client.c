@@ -79,12 +79,12 @@ int emojiCount = 1;
 char emoji[1][100];
 
 
-//자리 비움 관련된 것임
+// ?         o      
 char disturb[300][300]={"\0"};
 int i=0;
 int afk_mode =0;
 
-//공지 사항
+//         
 char noticebuffer[300];
 
 WINDOW *win[7],
@@ -232,15 +232,22 @@ void createRoom(int sock, roominfo rinfo){
     //enter roomname
     //child process, receive portnum from Rmanage_serv.c
     roominfo sendinfo;
-    for(int i=0; i<10; i++){
-	    str_len = read(sock, (void*)&sendinfo, sizeof(sendinfo));
-	    if(sendinfo.cnt > 0){
-	    printf("%s %d %d ", sendinfo.roomName, sendinfo.cnt, sendinfo.roomnum);
-	    for(int j=0; j<sendinfo.cnt; j++){
-		    printf("%s ", sendinfo.clnt_names[j]);
-	    }
-	    printf("\n");
-	    }
+    for(int i = 0; i < 10; i++){
+        str_len = read(sock, (void*)&sendinfo, sizeof(sendinfo));
+        if(sendinfo.cnt > 0){
+        printf("RoomName : %s cnt: %d/10 RoomNumber : %d ", sendinfo.roomName, sendinfo.cnt, sendinfo.roomnum);
+        printf("who : ");
+        for(int j=0; j < sendinfo.cnt; j++){
+            printf(" %s", sendinfo.clnt_names[j]);
+            if(j == sendinfo.cnt - 1){
+                printf("\n");
+            }
+            else{
+                printf(",");
+            }
+        }
+        printf("\n");
+    	}
     }
     //input roomName
     printf("input your roomName to create: ");
@@ -275,15 +282,22 @@ void enterRoom(int sock){
     char enterRoomName[NAME_SIZE];   
     int str_len;
     roominfo sendinfo;
-    for(int i=0; i<10; i++){
-	    str_len = read(sock, (void*)&sendinfo, sizeof(sendinfo));
-	    if(sendinfo.cnt > 0){
-	    printf("%s %d %d ", sendinfo.roomName, sendinfo.cnt, sendinfo.roomnum);
-	    for(int j=0; j<sendinfo.cnt; j++){
-		    printf("%s ", sendinfo.clnt_names[j]);
-	    }
-	    printf("\n");
-	    }
+    for(int i = 0; i < 10; i++){
+        str_len = read(sock, (void*)&sendinfo, sizeof(sendinfo));
+        if(sendinfo.cnt > 0){
+        printf("RoomName : %s cnt: %d/10 RoomNumber : %d ", sendinfo.roomName, sendinfo.cnt, sendinfo.roomnum);
+        printf("who : ");
+        for(int j=0; j < sendinfo.cnt; j++){
+            printf(" %s", sendinfo.clnt_names[j]);
+            if(j == sendinfo.cnt - 1){
+                printf("\n");
+            }
+            else{
+                printf(",");
+            }
+        }
+        printf("\n");
+        }
     }
     //input roomName
     printf("input your roomName to enter : ");
@@ -374,13 +388,13 @@ void * send_msg(void * arg)   // send thread main
 	int i;
 	char output[400];
 	strcpy(my_id, name);
-
+	sleep(1);
 	//combsend(svr_fd, send_str, sizeof(send_str), "name %s", cur_id);
 
 
 
 	// start curses terminal
-	initial();
+	//initial();
 
 	/*   bbox                    | mbox                  */
 	/*  -------------------------|                       */
@@ -400,18 +414,22 @@ void * send_msg(void * arg)   // send thread main
 	ibox = newwin(5, COLS - 23, LINES - 5, 2);
 	obox = newwin(6, 20, LINES - 6, COLS - 21);
 	wbox = newwin(1, 15, LINES - 5 + (ibox->_maxy), (ibox->_maxx) - 12);
+
 	win[0] = tbox, win[1] = ibox, win[2] = mbox;
 	win[3] = bbox, win[4] = obox, win[5] = wbox, win[6] = pbox;
+
 	for (i = 0; i < 7; i++)
 		if (win[i] == NULL) puts("NULL"), exit(1);
 	for (i = 0; i < 4; i++)
 		keypad(win[i], TRUE);
 	keypad(rbox, TRUE);
+
 	wsetscrreg(tbox, 0, 299);
 	scrollok(tbox, TRUE);// let box can be scrolled
 	scrollok(mbox, TRUE);
 	idlok(tbox, TRUE);
 	leaveok(tbox, TRUE);
+
 	rbox = newwin(10, COLS / 3, 5, COLS / 3);
 	win_c = ibox;
 	redraw(0);//need win_c
@@ -428,8 +446,8 @@ void * send_msg(void * arg)   // send thread main
 	char string[300];
 	while (1) {
 		
-		wrefresh(ibox);
-		wmove(ibox, 2, 0);
+		/*wrefresh(ibox);
+		wmove(ibox, 1, 0);*/
 		if (terminal(ibox, string, 280) == ERR) {
 			printf("terminal ERR\n");
 			escape(0);
@@ -455,6 +473,7 @@ void * send_msg(void * arg)   // send thread main
 			write(sock, name_msg, strlen(name_msg));
 			
 			/*strcpy(output, name_msg);
+
 			mvwaddstr(tbox, tbox_c,0,output);
 			strcpy(history[curline], output);
 			for(int i=0;i<(strlen(output)/(tbox->_maxx+1));i++){
@@ -469,16 +488,16 @@ void * send_msg(void * arg)   // send thread main
 			    tbox_c--;
 			   tbox_t++;
 			}*/
-
-
+			wclear(ibox);
+			
+			wmove(ibox,1,0);
 		}
+		/*memset(string, 0, sizeof(string));
+		wclear(ibox);
+		mvwprintw(pbox, 1, 0, "%c", ps);
+		wrefresh(pbox);
+		redraw(1);*/
 	}
-	memset(string, 0, sizeof(string));
-	wclear(ibox);
-	mvwprintw(pbox, 1, 0, "%c", ps);
-	wrefresh(pbox);
-	redraw(1);
-	
 
 /*	
 	int sock=*((int*)arg);
@@ -487,8 +506,8 @@ void * send_msg(void * arg)   // send thread main
 	{
 		fgets(msg, BUF_SIZE, stdin);
 		int msgcheckNum = msgcheck(msg);
-		//notice 치면 공지사항 나옴
-		//자리 비움을 위한 함수이다.
+		//notice ?                
+		// ?              ?  ? .
 		if(msgcheckNum == 1 || msgcheckNum == 2){ // afk
 			continue;
 		}
@@ -511,12 +530,12 @@ void * send_msg(void * arg)   // send thread main
 }
 
 void make_msg(char* msg, char* name_msg){
-	//notice가 들어가면 이름 빼고 서버로 입력시키는 것
+	//notice     ?    ?               ?½ ?     
 	if(strstr(msg,"notice"))
 	{
 		sprintf(name_msg,"%s",msg);	
 	}
-	//그 외는 다 입력시킴
+	//    ?      ?½ ?
 	else{
 		sprintf(name_msg,"%s %s", name, msg);
 	}
@@ -624,9 +643,10 @@ void * recv_msg(void * arg)   // read thread main
 
 	
 	memset(string, 0, sizeof(string));
-	wclear(ibox);
+//	wclear(ibox);
 	mvwprintw(pbox, 1, 0, "%c", ps);
 	wrefresh(pbox);
+//	wmove(ibox,1,0);
 	redraw(1);
 	}
 }
@@ -645,7 +665,7 @@ void * recv_msg(void * arg)   // read thread main
 			{
 				strcpy(noticebuffer,name_msg);	
 			}
-			//afk_mode가 1이라서 자리비움 배열에 메시지 온것 저장함
+			//afk_mode   1 ?   ?      迭    ?     °        
 			if(afk_mode ==1)
 			{
 			  strcpy(disturb[i],name_msg);
@@ -669,16 +689,16 @@ void error_handling(char *msg)
 
 /*
 void color(char *msg){
-    initscr(); //curses 시작
-    start_color(); // 색관련 curses사용 선언
-    init_pair(1, COLOR_GREEN,COLOR_BLACK);//검정바탕, 빨간 글자
-    attron(COLOR_PAIR(1));//1번 동작 실행
+    initscr(); //curses     
+    start_color(); //        curses        
+    init_pair(1, COLOR_GREEN,COLOR_BLACK);//        ,          
+    attron(COLOR_PAIR(1));//1            
     printw("%s", msg);
     attroff(COLOR_PAIR(1));
-    getch(); //문자 유무 확인
-    refresh(); //위 코드의 과정 출력
-    endwin(); //curses 종료
-//    clear(); 마지막 공지만 보여주는 역할
+    getch(); //          ?  
+    refresh(); //    ?            
+    endwin(); //curses     
+//    clear();                    ?      
 }
 */
 
@@ -778,7 +798,7 @@ void redraw(int mod) {
 	mvwprintw(bbox, 0, 4, "Hi!");
 	mvwWipen(bbox, 0, 7, 10);
 	//mvwprintw(bbox , 0 , 7 , "          ");
-	mvwAttrw(bbox, 0, 7, A_BOLD, "%s", cur_id);
+	mvwAttrw(bbox, 0, 7, A_BOLD, "%s", name);
 	//mvwAttrw(A_BOLD , bbox , 0 , 7 , cur_id);
 
 	touchwin(tbox);
