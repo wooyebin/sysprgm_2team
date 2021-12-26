@@ -19,20 +19,16 @@
 
 #include<stdarg.h>
 struct stat route;
-char command[250], send_str[250];
-char fileroute[40];
+char command[250];
 
 /* GNU style struct initialization */
 //   v one for "All"//point client array (sorted)
 int online = 0;//the num people on line
 char my_id[11], cur_id[20];
-char recvr_n[11] = { "All" };
-int svr_fd, clt_fd;
-int PORT;
-char IP[25];
-int root = 0;// whether you have root competence
+char recvr_n[11]= {"All"};
+int svr_fd;
 
-			 ///function for socket
+///function for socket
 void escape(int a);
 void redraw(int mod);
 //var for curses
@@ -74,7 +70,6 @@ void mvwAttrw(WINDOW *awin, int y, int x, int attrs, char *format, ...);
 int terminal(WINDOW *twin, char *str, int n);//manipulate insert box
 
 //normal function
-ssize_t combsend(int fd, char *msg, unsigned int msg_t, char *format, ...);
 
 //start main program
 int main() {
@@ -93,13 +88,6 @@ int main() {
 	}
 	strcpy(cur_id, my_id);
 	setbuf(stdin, NULL);
-
-
-
-	//combsend(svr_fd, send_str, sizeof(send_str), "name %s", cur_id);
-
-
-
 	// start curses terminal
 	initial();
 
@@ -108,10 +96,7 @@ int main() {
 	/*   tbox   +----------+     |                       */
 	/*          |   rbox   |     |                       */
 	/*          +----------+     |                       */
-	/*                           |                       */
-	/*  -------------------------|------                 */
-	/*  pbox| ibox       ________| obox                  */
-	/*      |           |  wbox  | ctrl-l to call rbox   */
+	/*                  ---+     |                       */
 
 
 	mbox = newwin( 2, 12, 0, COLS - 13);
@@ -263,11 +248,6 @@ void redraw(int mod) {
 
 	mvwprintw(bbox, 1, 0, "===CHATROOM===");
 
-	if (root == 1) {
-		mvwprintw(bbox, 0, 20, "Administrator");
-		wrefresh(bbox);
-	}
-
 	for (i = 0;i <= mbox->_maxy;i++)//member box
 		mvwaddch(mbox, i, 0, '|');
 
@@ -283,16 +263,11 @@ void redraw(int mod) {
 
 	if (mod == 0) {
 		mvwWipen(wbox, 0, 0, 15);
-		//mvwprintw(wbox , 0 , 0 , "               ");
-		mvwAttrw(wbox, 0, 10 - strlen(recvr_n), A_BOLD, " To %s", recvr_n);
-		//mvwAttrw(A_BOLD , wbox , 0 , 10-strlen(recvr_n) , " To ");
-		//mvwAttrw(A_BOLD , wbox , 0 , 14-strlen(recvr_n) , recvr_n);
-	}
+		mvwAttrw(wbox, 0, 10- strlen(recvr_n), A_BOLD, " TO %s", recvr_n);
+		}
 	mvwprintw(bbox, 0, 4, "Hi!");
 	mvwWipen(bbox, 0, 7, 10);
-	//mvwprintw(bbox , 0 , 7 , "          ");
 	mvwAttrw(bbox, 0, 7, A_BOLD, "%s", cur_id);
-	//mvwAttrw(A_BOLD , bbox , 0 , 7 , cur_id);
 
 	touchwin(tbox);
 	wrefresh(tbox);
@@ -461,12 +436,4 @@ int terminal(WINDOW *twin, char *str, int n) {
 	*str = '\0';
 	wrefresh(tbox);
 	return (OK);
-}
-
-ssize_t combsend(int fd, char *msg, unsigned int msg_t, char *format, ...) {
-	va_list arg;
-	va_start(arg, format);
-	vsnprintf(msg, msg_t, format, arg);
-	va_end(arg);
-	return send(fd, msg, msg_t, 0);
 }
