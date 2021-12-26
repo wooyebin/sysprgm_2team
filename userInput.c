@@ -112,7 +112,7 @@ void colored(){
 void userInput(){
 
     echo();
-    int key;
+    int key; move(22, 4);
     key = getch();
     int char_i = 0; // def = 0 (nothing in buffer)
 
@@ -160,8 +160,8 @@ void userInput(){
     }
 
     // print out buffers
-    move(1, 2);
-    printw("%s\n", inputbuf); 
+    move(keyidx+3, 3);
+    printw("%s\n", inputbuf);   keyidx++; 
 
     wclear(talkbox);
     wrefresh(talkbox);
