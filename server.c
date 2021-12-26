@@ -114,7 +114,7 @@ void * handle_clnt(void * arg)
 	fd_set fd2;
 
 	timeout.tv_sec = 3;
-	 timeout.tv_usec = 3000;
+	timeout.tv_usec = 3000;
 
 	FD_ZERO(&fd2);
 	FD_SET(clnt_sock, &fd2);

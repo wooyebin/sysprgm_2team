@@ -51,6 +51,10 @@ roominfo info;
 static sem_t sem_one;
 static sem_t sem_two;
 
+int emojiCount = 1;
+char emoji[1][100];
+
+
 //자리 비움 관련된 것임
 char disturb[300][300]={"\0"};
 int i=0;
@@ -62,6 +66,7 @@ char noticebuffer[300];
 int main(int argc, char *argv[])
 {
 	int sock;
+	strcpy(emoji[0], "^^\n");
 	init(argc, argv);
 	socket_init(&sock);
 	logInPage(sock);
@@ -114,13 +119,13 @@ void showmenu(int sock){
 
     printf("Input Menu : ");
     scanf("%d", &menu);
-    if((menu < 1) || (menu > 4)){
+    while((menu < 1) || (menu > 4)){
         printf("Not correct Number please try again\n");
         printf("Input Menu : ");
         scanf("%d", &menu);
     }
     
-    else if(menu == 1){
+    if(menu == 1){
         createRoom(sock, info);
     }
     else if(menu == 2){
@@ -213,6 +218,7 @@ void enterRoom(int sock){
     
     if(sendinfo.roomnum == -1){
         printf("this chatting room name is not in room information.\n"); 
+	error_handling("not chatting room name");
     }
     else{
         printf("write to chatclnt roomnum : %d \n", sendinfo.roomnum);     
@@ -258,6 +264,12 @@ int msgcheck(char* msg)
 		fputs(noticebuffer,stdout);
 		return 2;
 	}
+	else if ( !strcmp(msg, "emoji\n") ){
+		for ( int i=0; i<emojiCount; i++){
+			printf("%d : %s\n", i, emoji[i]);
+		}
+		return 3;
+	}
 	else if ( !strcmp(msg,"q\n")||!strcmp(msg,"Q\n") ){
 		return -1;
 	}
@@ -281,6 +293,13 @@ void * send_msg(void * arg)   // send thread main
 		if(msgcheckNum == -1){
 			close(sock);
 			exit(0);
+		}
+		if(msgcheckNum == 3){
+			int emojiNum = 0;
+			char temp;
+			scanf("%d", &emojiNum);
+			scanf("%c", &temp);
+			strcpy(msg, emoji[emojiNum]);
 		}
 		make_msg(msg, name_msg);
 		write(sock, name_msg, strlen(name_msg));		
