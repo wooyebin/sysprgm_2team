@@ -40,6 +40,7 @@ void error_handling(char * msg);
 
 int checkmsg(char*);
 void make_msg(char*, char*);
+void color(char *msg);
 
 char IP[20];
 int port;
@@ -261,6 +262,7 @@ int msgcheck(char* msg)
 		return 1;
 	}
 	else if ( !strcmp(msg,"notice\n") ){
+            	// color(noticebuffer);
 		fputs(noticebuffer,stdout);
 		return 2;
 	}
@@ -287,7 +289,7 @@ void * send_msg(void * arg)   // send thread main
 		int msgcheckNum = msgcheck(msg);
 		//notice 치면 공지사항 나옴
 		//자리 비움을 위한 함수이다.
-		if(msgcheckNum == 2 || msgcheckNum == 1){
+		if(msgcheckNum == 1 || msgcheckNum == 2){ // afk
 			continue;
 		}
 		if(msgcheckNum == -1){
@@ -357,3 +359,18 @@ void error_handling(char *msg)
 	fputc('\n', stderr);
 	exit(1);
 }
+
+/*
+void color(char *msg){
+    initscr(); //curses 시작
+    start_color(); // 색관련 curses사용 선언
+    init_pair(1, COLOR_GREEN,COLOR_BLACK);//검정바탕, 빨간 글자
+    attron(COLOR_PAIR(1));//1번 동작 실행
+    printw("%s", msg);
+    attroff(COLOR_PAIR(1));
+    getch(); //문자 유무 확인
+    refresh(); //위 코드의 과정 출력
+    endwin(); //curses 종료
+//    clear(); 마지막 공지만 보여주는 역할
+}
+*/
