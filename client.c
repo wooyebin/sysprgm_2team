@@ -22,6 +22,7 @@ typedef struct {
     int roomnum; //chatroom portnum
     int option; //to check enter or make room
     int clnt_socks[10];
+    char clnt_names[10][20];
 }roominfo;
 
 
@@ -36,6 +37,7 @@ void createRoom(int sock, roominfo rinfo);
 void enterRoom(int sock);   
 void chatting(roominfo rinfo);
 void help();
+void showRoomInfo();
 void error_handling(char * msg);
 
 int checkmsg(char*);
@@ -111,6 +113,8 @@ void logInPage(int sock){
 
     showmenu(sock);
 }
+
+
 void showmenu(int sock){
     int menu = 0;
     printf("1. Create Room\n");
@@ -130,6 +134,7 @@ void showmenu(int sock){
         createRoom(sock, info);
     }
     else if(menu == 2){
+	showRoomInfo();
         enterRoom(sock);
     }
     else if(menu == 3){
@@ -144,6 +149,14 @@ void showmenu(int sock){
     }
 
 }
+
+
+void showRoomInfo(){
+
+
+}
+
+
 void help(){
     FILE *fp;
     char buf[BUF_SIZE];
@@ -165,17 +178,29 @@ void createRoom(int sock, roominfo rinfo){
     
     //enter roomname
     //child process, receive portnum from Rmanage_serv.c
-    
+    roominfo sendinfo;
+    for(int i=0; i<10; i++){
+	    str_len = read(sock, (void*)&sendinfo, sizeof(sendinfo));
+	    if(sendinfo.cnt > 0){
+	    printf("%s %d %d ", sendinfo.roomName, sendinfo.cnt, sendinfo.roomnum);
+	    for(int j=0; j<sendinfo.cnt; j++){
+		    printf("%s ", sendinfo.clnt_names[j]);
+	    }
+	    printf("\n");
+	    }
+    }
     //input roomName
     printf("input your roomName to create: ");
     scanf("%s", roomname);
+    char temp;
+    scanf("%c", &temp);
     //fgets(roomname, NAME_SIZE, stdin);        
     
     strcpy(rinfo.roomName, roomname);
 
     //input option
     rinfo.option = 1;
-
+    strcpy(rinfo.clnt_names[0], name);
     //send to rmanage server
     write(sock, (void*)&rinfo, sizeof(info));
 
@@ -197,16 +222,27 @@ void enterRoom(int sock){
     char enterRoomName[NAME_SIZE];   
     int str_len;
     roominfo sendinfo;
-
+    for(int i=0; i<10; i++){
+	    str_len = read(sock, (void*)&sendinfo, sizeof(sendinfo));
+	    if(sendinfo.cnt > 0){
+	    printf("%s %d %d ", sendinfo.roomName, sendinfo.cnt, sendinfo.roomnum);
+	    for(int j=0; j<sendinfo.cnt; j++){
+		    printf("%s ", sendinfo.clnt_names[j]);
+	    }
+	    printf("\n");
+	    }
+    }
     //input roomName
     printf("input your roomName to enter : ");
 
     //fgets(enterRoomName, NAME_SIZE, stdin);          
     scanf("%s", enterRoomName);
+    char temp;
+    scanf("%c", &temp);
     strcpy(sendinfo.roomName, enterRoomName);
     
     sendinfo.option = 2;    
-
+    strcpy(sendinfo.clnt_names[0], name);
     write(sock, (void*) &sendinfo, sizeof(sendinfo));
 
     printf("\n loading......\n");

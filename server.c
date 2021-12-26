@@ -24,6 +24,7 @@ typedef struct {
     int roomnum; //chatroom portnum
     int option; //to check enter or make room
     int clnt_socks[ROOMCOUNT];
+    char clnt_names[ROOMCOUNT][20];
 }roominfo;
 
 void init(int, char**);
@@ -120,6 +121,9 @@ void * handle_clnt(void * arg)
 	FD_SET(clnt_sock, &fd2);
 
 	if((fd_num = select(clnt_sock+1, 0, &fd2, 0, &timeout)) > 0){
+		for(int i=0; i<10; i++){
+			write(clnt_sock, (void*)&info[i], sizeof(info[i]));
+		}
 		str_len = read(clnt_sock, (void*)&presentinfo, BUF_SIZE);
 
 		if(str_len == 0){			
@@ -233,6 +237,7 @@ void option1(int clnt_sock, roominfo rinfo, int len){
 }
 
 int option2(int clnt_sock ,roominfo rinfo, int len){
+
 	int i;
 	for(i = 0; i< ROOMCOUNT; i++){
 		//have to check this can be error
@@ -240,6 +245,7 @@ int option2(int clnt_sock ,roominfo rinfo, int len){
 			info[i].cnt++;
 			rinfo.cnt = info[i].cnt;
 			info[i].clnt_socks[info[i].cnt-1] = clnt_sock;
+			strcpy(info[i].clnt_names[info[i].cnt-1], rinfo.clnt_names[0]);
 			rinfo.clnt_socks[rinfo.cnt-1] = clnt_sock;
 			write(clnt_sock, (void*)&rinfo, sizeof(rinfo));
 			return 1;
