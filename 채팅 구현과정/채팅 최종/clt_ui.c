@@ -74,12 +74,7 @@ void mvwAttrw(WINDOW *awin, int y, int x, int attrs, char *format, ...);
 int terminal(WINDOW *twin, char *str, int n);//manipulate insert box
 
 //normal function
-char *trim(char *);
-int combsys(char *cmd, unsigned int cmd_t, char *format, ...);
-int combfw(char *str, unsigned int str_t, char *format, ...);
 ssize_t combsend(int fd, char *msg, unsigned int msg_t, char *format, ...);
-char* omit_id(char *str);//if name>8char print "name8 , , , "
-char omitstr[15];
 
 //start main program
 int main() {
@@ -101,7 +96,7 @@ int main() {
 
 
 
-	combsend(svr_fd, send_str, sizeof(send_str), "name %s", cur_id);
+	//combsend(svr_fd, send_str, sizeof(send_str), "name %s", cur_id);
 
 
 
@@ -468,47 +463,10 @@ int terminal(WINDOW *twin, char *str, int n) {
 	return (OK);
 }
 
-int combfw(char *str, unsigned int str_t, char *format, ...) {
-	va_list arg;
-	va_start(arg, format);
-	vsnprintf(str, str_t, format, arg);
-	va_end(arg);
-	FILE *fp;
-	/*fp = fopen(FILENAME, "a");
-	if (!fp) printf("%s cannot open\n", FILENAME), exit(1);
-	fprintf(fp, "%s", str);
-	fclose(fp);*/
-	return 0;
-}
-
-int combsys(char *cmd, unsigned int cmd_t, char *format, ...) {
-	va_list arg;
-	va_start(arg, format);
-	vsnprintf(cmd, cmd_t, format, arg);
-	va_end(arg);
-	return system(cmd);
-}
-
 ssize_t combsend(int fd, char *msg, unsigned int msg_t, char *format, ...) {
 	va_list arg;
 	va_start(arg, format);
 	vsnprintf(msg, msg_t, format, arg);
 	va_end(arg);
 	return send(fd, msg, msg_t, 0);
-}
-
-char *omit_id(char *str) {
-	if (strlen(str)>8)
-		sprintf(omitstr, "%.5s...", str);
-	else
-		sprintf(omitstr, "%.8s", str);
-	return omitstr;
-}
-
-char *trim(char *str) {
-	int i = strlen(str) - 1;
-	while (str[i] == ' ') str[i--] = 0;
-	i = 0;
-	while (str[0] == ' ') str++;
-	return str;
 }
