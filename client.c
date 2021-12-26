@@ -74,6 +74,7 @@ int room=0;
 roominfo info;
 static sem_t sem_one;
 static sem_t sem_two;
+pthread_mutex_t mutx;
 
 int emojiCount = 1;
 char emoji[1][100];
@@ -326,6 +327,8 @@ void chat_start(int* sock){
 	pthread_t snd_thread, rcv_thread;
 	void * thread_return;
 	
+	pthread_mutex_init(&mutx, NULL);
+
 	pthread_create(&snd_thread, NULL, send_msg, (void*)sock);
 	pthread_create(&rcv_thread, NULL, recv_msg, (void*)sock);
 
@@ -370,121 +373,6 @@ int msgcheck(char* msg)
 
 void * send_msg(void * arg)   // send thread main
 {
-	signal(SIGINT, escape);
-	int i;
-	char output[400];
-	strcpy(my_id, name);
-
-	//combsend(svr_fd, send_str, sizeof(send_str), "name %s", cur_id);
-
-
-
-	// start curses terminal
-	initial();
-
-	/*   bbox                    | mbox                  */
-	/*  -------------------------|                       */
-	/*   tbox   +----------+     |                       */
-	/*          |   rbox   |     |                       */
-	/*          +----------+     |                       */
-	/*                           |                       */
-	/*  -------------------------|------                 */
-	/*  pbox| ibox       ________| obox                  */
-	/*      |           |  wbox  | ctrl-l to call rbox   */
-
-
-	mbox = newwin( 2, 12, 0, COLS - 13);
-	bbox = newwin(3, COLS - 13, 0, 0);
-	tbox = newwin(1000, COLS - 13, 3, 0);
-	pbox = newwin(5, 2, LINES - 5, 0);
-	ibox = newwin(5, COLS - 23, LINES - 5, 2);
-	obox = newwin(6, 20, LINES - 6, COLS - 21);
-	wbox = newwin(1, 15, LINES - 5 + (ibox->_maxy), (ibox->_maxx) - 12);
-
-	win[0] = tbox, win[1] = ibox, win[2] = mbox;
-	win[3] = bbox, win[4] = obox, win[5] = wbox, win[6] = pbox;
-
-	for (i = 0; i < 7; i++)
-		if (win[i] == NULL) puts("NULL"), exit(1);
-	for (i = 0; i < 4; i++)
-		keypad(win[i], TRUE);
-	keypad(rbox, TRUE);
-
-	wsetscrreg(tbox, 0, 299);
-	scrollok(tbox, TRUE);// let box can be scrolled
-	scrollok(mbox, TRUE);
-	idlok(tbox, TRUE);
-	leaveok(tbox, TRUE);
-
-	rbox = newwin(10, COLS / 3, 5, COLS / 3);
-	win_c = ibox;
-	redraw(0);//need win_c
-	wmove(ibox, 1, 0);
-	mvwprintw(pbox, 1, 0, "%c", ps);
-	wrefresh(pbox);
-	wrefresh(ibox);
-	mvwprintw(mbox, 0, 4, "All");
-	wrefresh(mbox);
-	getyx(ibox, y, x);
-
-	int sock=*((int*)arg);
-	char name_msg[NAME_SIZE+BUF_SIZE];
-	char string[300];
-	while (1) {
-		
-		wrefresh(ibox);
-		wmove(ibox, 1, 0);
-		if (terminal(ibox, string, 280) == ERR) {
-			printf("terminal ERR\n");
-			escape(0);
-		}
-		if (string[0] != '\0') {
-			strcpy(msg, string);
-			int msgcheckNum = msgcheck(msg);
-			if(msgcheckNum == 1 || msgcheckNum == 2){ // afk
-				continue;
-			}
-			if(msgcheckNum == -1){
-				close(sock);
-				exit(0);
-			}
-			if(msgcheckNum == 3){
-				int emojiNum = 0;
-				char temp;
-				scanf("%d", &emojiNum);
-				scanf("%c", &temp);
-				strcpy(msg, emoji[emojiNum]);
-			}
-			make_msg(msg, name_msg);
-			write(sock, name_msg, strlen(name_msg));
-			
-			strcpy(output, name_msg);
-
-			mvwaddstr(tbox, tbox_c,0,output);
-			strcpy(history[curline], output);
-			for(int i=0;i<(strlen(output)/(tbox->_maxx+1));i++){
-				tbox_c++;
-				curline++;
-			}
-				if((strlen(output)%(tbox->_maxx+1))!=0){
-					tbox_c++;
-					curline++;
-					}
-			while(tbox_c>LINES-(ibox->_maxy+1)-(bbox->_maxy+1)){				wscrl(tbox , 1);
-			    tbox_c--;
-			   tbox_t++;
-			}
-
-
-		}
-		memset(string, 0, sizeof(string));
-		wclear(ibox);
-		mvwprintw(pbox, 1, 0, "%c", ps);
-		wrefresh(pbox);
-		redraw(1);
-	}
-
-/*	
 	int sock=*((int*)arg);
 	char name_msg[NAME_SIZE+BUF_SIZE];
 	while(1) 
@@ -510,8 +398,7 @@ void * send_msg(void * arg)   // send thread main
 		make_msg(msg, name_msg);
 		write(sock, name_msg, strlen(name_msg));		
 	}
-	return NULL;
-*/
+	return NULL;	
 }
 
 void make_msg(char* msg, char* name_msg){
@@ -532,110 +419,6 @@ void * recv_msg(void * arg)   // read thread main
 	int sock=*((int*)arg);
 	char name_msg[NAME_SIZE+BUF_SIZE];
 	int str_len;
-	signal(SIGINT, escape);
-	int i;
-	char output[400];
-
-	//combsend(svr_fd, send_str, sizeof(send_str), "name %s", cur_id);
-
-
-
-	// start curses terminal
-	initial();
-
-	/*   bbox                    | mbox                  */
-	/*  -------------------------|                       */
-	/*   tbox   +----------+     |                       */
-	/*          |   rbox   |     |                       */
-	/*          +----------+     |                       */
-	/*                           |                       */
-	/*  -------------------------|------                 */
-	/*  pbox| ibox       ________| obox                  */
-	/*      |           |  wbox  | ctrl-l to call rbox   */
-
-	mbox = newwin( 2, 12, 0, COLS - 13);
-	bbox = newwin(3, COLS - 13, 0, 0);
-	tbox = newwin(1000, COLS - 13, 3, 0);
-	pbox = newwin(5, 2, LINES - 5, 0);
-	ibox = newwin(5, COLS - 23, LINES - 5, 2);
-	obox = newwin(6, 20, LINES - 6, COLS - 21);
-	wbox = newwin(1, 15, LINES - 5 + (ibox->_maxy), (ibox->_maxx) - 12);
-
-	win[0] = tbox, win[1] = ibox, win[2] = mbox;
-	win[3] = bbox, win[4] = obox, win[5] = wbox, win[6] = pbox;
-
-	for (i = 0; i < 7; i++)
-		if (win[i] == NULL) puts("NULL"), exit(1);
-	for (i = 0; i < 4; i++)
-		keypad(win[i], TRUE);
-	keypad(rbox, TRUE);
-
-	wsetscrreg(tbox, 0, 299);
-	scrollok(tbox, TRUE);// let box can be scrolled
-	scrollok(mbox, TRUE);
-	idlok(tbox, TRUE);
-	leaveok(tbox, TRUE);
-
-	rbox = newwin(10, COLS / 3, 5, COLS / 3);
-	win_c = ibox;
-	redraw(0);//need win_c
-	wmove(ibox, 1, 0);
-	mvwprintw(pbox, 1, 0, "%c", ps);
-	wrefresh(pbox);
-	wrefresh(ibox);
-	mvwprintw(mbox, 0, 4, "All");
-	wrefresh(mbox);
-	getyx(ibox, y, x);
-
-	char string[300];
-	while (1) {
-		
-		wrefresh(ibox);
-		wmove(ibox, 1, 0);
-		str_len=read(sock, name_msg, NAME_SIZE+BUF_SIZE-1);
-		if(str_len==-1) 
-			return (void*)-1;
-		name_msg[str_len]=0;
-			
-		if(strstr(name_msg,"notice"))
-		{
-			strcpy(noticebuffer,name_msg);	
-		}
-		if(afk_mode ==1)
-		{
-		  strcpy(disturb[i],name_msg);
-		  i++;
-		}
-		else{
-		//	fputs(name_msg, stdout);
-			strcpy(output, name_msg);
-			mvwaddstr(tbox, tbox_c,0,output);
-			strcpy(history[curline], output);
-			for(int i=0;i<(strlen(output)/(tbox->_maxx+1));i++){
-				tbox_c++;
-				curline++;
-				printf("ASD\n");
-			}
-			if((strlen(output)%(tbox->_maxx+1))!=0){
-				tbox_c++;
-				curline++;
-			}
-			while(tbox_c>LINES-(ibox->_maxy+1)-(bbox->_maxy+1)){				wscrl(tbox , 1);
-		    	tbox_c--;
-			tbox_t++;
-		}
-
-
-	}
-	memset(string, 0, sizeof(string));
-	wclear(ibox);
-	mvwprintw(pbox, 1, 0, "%c", ps);
-	wrefresh(pbox);
-	redraw(1);
-}
-
-
-/*
 	while(1)
 	{
 		str_len=read(sock, name_msg, NAME_SIZE+BUF_SIZE-1);
@@ -660,7 +443,6 @@ void * recv_msg(void * arg)   // read thread main
 		//}
 	}
 	return NULL;
-*/
 }
 	
 void error_handling(char *msg)
