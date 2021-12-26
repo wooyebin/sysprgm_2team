@@ -30,7 +30,7 @@ void init(int, char**);
 void socket_init(int*);
 void chat_start(int*);
 void * handle_clnt(void * arg);
-void send_msg(char * msg, int len);
+void send_msg(char * msg, int len, int);
 void error_handling(char * msg);
 int command_detection(char*);
 void option1(int, roominfo, int);
@@ -179,7 +179,7 @@ void * handle_clnt(void * arg)
 */
 	//else
 	while((str_len=read(clnt_sock, msg, sizeof(msg)))!=0){
-		send_msg(msg, str_len);
+		send_msg(msg, str_len, clnt_sock);
 	}
 	pthread_mutex_lock(&mutx);
 	for(i=0; i<clnt_cnt; i++)   // remove disconnected client
@@ -239,6 +239,7 @@ int option2(int clnt_sock ,roominfo rinfo, int len){
 		if(strcmp(info[i].roomName, rinfo.roomName) == 0){				     rinfo.roomnum = i;
 			info[i].cnt++;
 			rinfo.cnt = info[i].cnt;
+			info[i].clnt_socks[info[i].cnt-1] = clnt_sock;
 			rinfo.clnt_socks[rinfo.cnt-1] = clnt_sock;
 			write(clnt_sock, (void*)&rinfo, sizeof(rinfo));
 			return 1;
@@ -249,12 +250,21 @@ int option2(int clnt_sock ,roominfo rinfo, int len){
 	return -1;
 }
 
-void send_msg(char * msg, int len)   // send to all
+void send_msg(char * msg, int len, int clnt_sock)   // send to all
 {
-	int i;
+	int i, j;
+	int myRoomNum = -1;
 	pthread_mutex_lock(&mutx);
-	for(i=0; i<clnt_cnt; i++)
-		write(clnt_socks[i], msg, len);
+	for(i=0; i<roomnum; i++){
+		for(j=0; j<info[i].cnt; j++){
+			if(clnt_sock == info[i].clnt_socks[j]){
+				myRoomNum = info[i].roomnum;
+			}
+		}
+	}
+
+	for(i=0; i<info[myRoomNum].cnt; i++)
+		write(info[myRoomNum].clnt_socks[i], msg, len);
 	pthread_mutex_unlock(&mutx);
 }
 void error_handling(char * msg)

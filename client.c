@@ -67,7 +67,6 @@ int main(int argc, char *argv[])
 	socket_init(&sock);
 	//show_menu(name, sock);
 	logInPage(sock);
-	printf("login end\n");
 	chat_start(&sock);
 	close(sock);  
 	return 0;
@@ -326,7 +325,7 @@ void make_msg(char* msg, char* name_msg){
 	}
 	//그 외는 다 입력시킴
 	else{
-		sprintf(name_msg,"%d%s %s", room, name, msg);
+		sprintf(name_msg,"%s %s", name, msg);
 	}
 }
 
@@ -342,7 +341,7 @@ void * recv_msg(void * arg)   // read thread main
 		if(str_len==-1) 
 			return (void*)-1;
 		name_msg[str_len]=0;
-		if(name_msg[0]-48 == room){
+		//if(name_msg[0]-48 == room){
 			if(strstr(name_msg,"notice"))
 			{
 				strcpy(noticebuffer,name_msg);	
@@ -356,7 +355,7 @@ void * recv_msg(void * arg)   // read thread main
 			else{
 				fputs(name_msg, stdout);
 			}
-		}
+		//}
 	}
 	return NULL;
 }
