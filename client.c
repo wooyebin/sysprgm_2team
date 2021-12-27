@@ -375,7 +375,7 @@ int msgcheck(char* msg)
 		}
 		return 3;
 	}
-	else if ( !strcmp(msg,"q\n")||!strcmp(msg,"Q\n") ){
+	else if ( !strcmp(msg,"q")||!strcmp(msg,"Q") ){
 		return -1;
 	}
 
@@ -456,10 +456,22 @@ void * send_msg(void * arg)   // send thread main
 			strcpy(msg, string);
 			int msgcheckNum = msgcheck(msg);
 			if(msgcheckNum == 1 || msgcheckNum == 2){ // afk
+				wclear(ibox);
+				wmove(ibox,1,0);
 				continue;
 			}
 			if(msgcheckNum == -1){
-				close(sock);
+				strcpy(name_msg, "");
+				sprintf(name_msg, "%s is quit\n", name);
+				write(sock, name_msg, strlen(name_msg));
+				char exit_msg[3][25] = {
+					"Exit chatroom" ,
+					"connection break" ,
+					"server terminated" ,
+				};
+				endwin();
+				close(svr_fd);
+				//puts(exit_msg[idx]);
 				exit(0);
 			}
 			if(msgcheckNum == 3){
@@ -512,7 +524,14 @@ void * send_msg(void * arg)   // send thread main
 			continue;
 		}
 		if(msgcheckNum == -1){
-			close(sock);
+			char exit_msg[3][25] = {
+				"Exit chatroom" ,
+				"connection break" ,
+				"server terminated" ,
+			};
+			endwin();
+			close(svr_fd);
+			puts(exit_msg[idx]);
 			exit(0);
 		}
 		if(msgcheckNum == 3){
@@ -530,12 +549,12 @@ void * send_msg(void * arg)   // send thread main
 }
 
 void make_msg(char* msg, char* name_msg){
-	//notice     ?    ?               ?¨ö ?     
+	//notice     ?    ?               ?   ?     
 	if(strstr(msg,"notice"))
 	{
 		sprintf(name_msg,"%s",msg);	
 	}
-	//    ?      ?¨ö ?
+	//    ?      ?   ?
 	else{
 		sprintf(name_msg,"%s %s", name, msg);
 	}
@@ -629,7 +648,6 @@ void * recv_msg(void * arg)   // read thread main
 			for(int i=0;i<(strlen(output)/(tbox->_maxx+1));i++){
 				tbox_c++;
 				curline++;
-				printf("ASD\n");
 			}
 			if((strlen(output)%(tbox->_maxx+1))!=0){
 				tbox_c++;
@@ -665,7 +683,7 @@ void * recv_msg(void * arg)   // read thread main
 			{
 				strcpy(noticebuffer,name_msg);	
 			}
-			//afk_mode   1 ?   ?      ò÷    ?     ¡Æ        
+			//afk_mode   1 ?   ?            ?               
 			if(afk_mode ==1)
 			{
 			  strcpy(disturb[i],name_msg);
@@ -704,15 +722,7 @@ void color(char *msg){
 
 
 void escape(int idx) {
-	char exit_msg[3][25] = {
-		"Exit chatroom" ,
-		"connection break" ,
-		"server terminated" ,
-	};
-	endwin();
-	close(svr_fd);
-	puts(exit_msg[idx]);
-	exit(0);
+	printf("\nif you want to terminate Chatting program enter 'q' or Q\n");
 }
 
 void initial(void) {
