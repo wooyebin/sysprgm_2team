@@ -315,6 +315,7 @@ int option2(int clnt_sock ,roominfo rinfo, int len){
 			info[i].cnt++;
 			rinfo.cnt = info[i].cnt;
 			info[i].clnt_socks[info[i].cnt-1] = clnt_sock;
+			rinfo.roomnum = info[i].roomnum
 			strcpy(info[i].clnt_names[info[i].cnt-1], rinfo.clnt_names[0]);
 			rinfo.clnt_socks[rinfo.cnt-1] = clnt_sock;
 			write(clnt_sock, (void*)&rinfo, sizeof(rinfo));
