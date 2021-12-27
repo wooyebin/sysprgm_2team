@@ -34,8 +34,11 @@ void * handle_clnt(void * arg);
 void send_msg(char * msg, int len, int);
 void error_handling(char * msg);
 int command_detection(char*);
+int quit_detection(char*);
 void option1(int, roominfo, int);
 int option2(int, roominfo, int);
+void delete(int);
+
 
 int port;
 int clnt_cnt=0;
@@ -97,7 +100,6 @@ void chat_start(int* serv_sock){
 		pthread_mutex_lock(&mutx);
 		clnt_socks[clnt_cnt++]=clnt_sock;
 		pthread_mutex_unlock(&mutx);
-	
 		pthread_create(&t_id, NULL, handle_clnt, (void*)&clnt_sock);
 		pthread_detach(t_id);
 		printf("Connected client IP: %s \n", inet_ntoa(clnt_adr.sin_addr));
@@ -121,9 +123,11 @@ void * handle_clnt(void * arg)
 	FD_SET(clnt_sock, &fd2);
 
 	if((fd_num = select(clnt_sock+1, 0, &fd2, 0, &timeout)) > 0){
+		pthread_mutex_lock(&mutx);
 		for(int i=0; i<10; i++){
 			write(clnt_sock, (void*)&info[i], sizeof(info[i]));
 		}
+		pthread_mutex_unlock(&mutx);
 		str_len = read(clnt_sock, (void*)&presentinfo, BUF_SIZE);
 
 		if(str_len == 0){			
@@ -149,57 +153,88 @@ void * handle_clnt(void * arg)
 		printf("\n");
 	}
 
-/*
-	if(commandNum == 1){
-		str_len=read(clnt_sock, msg, sizeof(msg));
-		str_len=read(clnt_sock, msg, sizeof(msg));
-		char *makingRoomName =strtok(msg, " ");
-		strcpy(room_member[room_num][room_mem[room_num]],makingRoomName);
-		makingRoomName = strtok(NULL, " ");
-		strcpy(room_name[room_num], makingRoomName);
-		room_mem[room_num] ++;
-		room_num++;
-	}
-	else if(commandNum == 2){
-		char roomlist[4096];
-		char temp[1024];
-		strcpy(roomlist, "num | room name(mem num) | room members\n");
-		for(i=0; i<room_num; i++){
-			sprintf(temp, "%d) %s(%d) ", i, room_name[i], room_mem[i]);
-			strcat(roomlist, temp);
-			for(j=0; j<room_mem[i]; j++){
-				sprintf(temp, "%s ", room_member[i][j]);
-				strcat(roomlist, temp);
-			}
-			strcat(roomlist, "\n");
-		}
-		send_msg(roomlist, strlen(roomlist));
-		str_len=read(clnt_sock, msg, sizeof(msg));
-		int room = command_detection(msg);
-		strcpy(room_member[room][room_mem[room]], strtok(msg," "));
-		room_mem[room] ++;
-		str_len=read(clnt_sock, msg, sizeof(msg));
-	}
-*/
 	str_len=read(clnt_sock, msg, sizeof(msg));
 	while((str_len=read(clnt_sock, msg, sizeof(msg)))!=0){
-		send_msg(msg, str_len, clnt_sock);
+		if ( quit_detection(msg) == 1){
+			send_msg(msg, str_len, clnt_sock);
+			delete(clnt_sock);
+		}
+		else{
+			send_msg(msg, str_len, clnt_sock);
+		}
 	}
 	pthread_mutex_lock(&mutx);
 	for(i=0; i<clnt_cnt; i++)   // remove disconnected client
 	{
 		if(clnt_sock==clnt_socks[i])
 		{
-			while(i < clnt_cnt)
+			while(i < clnt_cnt){
 				clnt_socks[i]=clnt_socks[i+1];
+				i++;
+			}	
 			break;
+			
 		}
 	}
+	printf("disconnect\n");
 	clnt_cnt--;
 	pthread_mutex_unlock(&mutx);
 	close(clnt_sock);
 	return NULL;
 }
+
+void delete(int clnt_sock){
+	pthread_mutex_lock(&mutx);
+	for(int i=0; i<clnt_cnt; i++)   // remove disconnected client
+	{
+		if(clnt_sock==clnt_socks[i])
+		{
+			while(i < clnt_cnt){
+				clnt_socks[i]=clnt_socks[i+1];
+				i++;
+			}
+			break;
+		}
+	}
+	clnt_cnt--;
+	for(int j=0; j<roomnum; j++){
+		for(int i=0; i<info[j].cnt; i++)   // remove disconnected client
+		{
+			if(clnt_sock==info[j].clnt_socks[i])
+			{
+				printf("right\n");
+				while(i < info[j].cnt){
+					info[j].clnt_socks[i]=info[j].clnt_socks[i+1];
+					i++;
+				}
+				break;
+			}
+		}
+		info[j].cnt--;
+	}
+	pthread_mutex_unlock(&mutx);
+}
+
+
+int quit_detection(char* msg){
+	char* quitMsg = "is quit";
+	int k=0, j=0;
+	if (strstr(msg, "]")){
+		while(msg[k] != ']') k++;
+		k+=2;
+		while(msg[k] == quitMsg[j]){
+			k++; j++;
+		}
+		if (j==7 && strlen(msg)==k+1){
+			return 1;
+		}
+		else{
+			return 0;
+		}
+	}
+	else return 0;
+}
+
 
 int command_detection(char* msg){
 //	char* command = "notice ";
