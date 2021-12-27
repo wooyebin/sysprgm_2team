@@ -211,16 +211,19 @@ void delete(int clnt_sock){
 				if(temp == 0){
 					strcpy(info[j].roomName, "\0");
 					strcpy(info[j].clnt_names[0], "\0");
-					info[i].clnt_socks[0] = 0;
-					info[j].cnt = 0;										
-
+					info[j].clnt_socks[0] = 0;
+					info[j].cnt = 0;								
+					
+					
 					temp = info[j].roomnum;
+					memset(&info[j],0,sizeof(info[j]));
 					for(k = temp; k <ROOMCOUNT; k++){
 						if(info[k].roomnum > 0){
 							info[k].roomnum--;
 						}
 					}
-
+					
+					roomnum--;
 					printf("room destroyed!!\n");
 		
 				}
