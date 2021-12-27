@@ -153,7 +153,6 @@ void * handle_clnt(void * arg)
 	str_len=read(clnt_sock, msg, sizeof(msg));
 	while((str_len=read(clnt_sock, msg, sizeof(msg)))!=0){
 		if ( strstr(msg, "is quit") ){
-			printf("scuas\n");
 			send_msg(msg, str_len, clnt_sock);
 			delete(clnt_sock);
 			close(clnt_sock);
@@ -187,7 +186,6 @@ void delete(int clnt_sock){
 	int temp = 0;
 	int k = 0;
 	pthread_mutex_lock(&mutx);
-	printf("\ndelete function is started\n");
 	for(int i=0; i<clnt_cnt; i++)   // remove disconnected client
 	{
 		if(clnt_sock==clnt_socks[i])
@@ -237,8 +235,7 @@ void delete(int clnt_sock){
 						info[j].clnt_socks[i]=info[j].clnt_socks[i+1];
 						i++;
 					}
-					info[j].cnt --;					
-					printf("right decrease\n");
+					info[j].cnt --;
 
 				}			
 
@@ -249,7 +246,6 @@ void delete(int clnt_sock){
 		}
 	}
 	pthread_mutex_unlock(&mutx);
-	printf("\ndelete function is ended\n");
 
 }
 
