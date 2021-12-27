@@ -2,8 +2,8 @@
 make를 합니다.
 
 ex)
-서버 사용법: ./server 8888 
-클라이언트 사용법: ./client 127.0.0.1 8888 john
+서버 사용법: ./server 
+클라이언트 사용법: ./client 
 
 1.Create Room
   1.1 방이름을 작성합니다.
