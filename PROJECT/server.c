@@ -34,7 +34,6 @@ void chat_start(int*);
 void * handle_clnt(void * arg);
 void send_msg(char * msg, int len, int);
 void error_handling(char * msg);
-int command_detection(char*);
 int quit_detection(char*);
 void option1(int, roominfo, int);
 int option2(int, roominfo, int);
@@ -247,45 +246,6 @@ void delete(int clnt_sock){
 	}
 	pthread_mutex_unlock(&mutx);
 
-}
-
-/*
-int quit_detection(char* msg){
-	char* quitMsg = "is quit";
-	int k=0, j=0;
-	if (strstr(msg, "]")){
-		while(msg[k] != ']') k++;
-		k+=2;
-		while(msg[k] == quitMsg[j]){
-			k++; j++;
-		}
-		if (j==6){
-			return 1;
-		}
-		else{
-			return 0;
-		}
-	}
-	else return 0;
-}
-*/
-
-int command_detection(char* msg){
-//	char* command = "notice ";
-	int i=0, j=0;
-	while(msg[i] != ']') i++;
-	i += 2;
-/*	while(msg[i] == command[j]){
-		i++; j++;
-	}
-	if ( j==7){
-		return 1;
-	}
-	else{
-		return 0;
-	}
-*/
-	return msg[i] - 48;
 }
 
 void option1(int clnt_sock, roominfo rinfo, int len){
