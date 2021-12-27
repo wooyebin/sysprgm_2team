@@ -136,7 +136,7 @@ void * handle_clnt(void * arg)
 			printf("for test sendinfo success\n");		             		
 			option1(clnt_sock, presentinfo, str_len);	
 		}
-		else if((str_len >0) &&(presentinfo.option == 2)){
+		else if((str_len >0) && (presentinfo.option == 2)){
 			//for debugging
 			printf("for test checkinfo success\n");		             		
 			if(option2(clnt_sock, presentinfo, str_len) > 0){
@@ -314,7 +314,7 @@ int option2(int clnt_sock ,roominfo rinfo, int len){
 			info[i].cnt++;
 			rinfo.cnt = info[i].cnt;
 			info[i].clnt_socks[info[i].cnt-1] = clnt_sock;
-			rinfo.roomnum = info[i].roomnum
+			rinfo.roomnum = info[i].roomnum;
 			strcpy(info[i].clnt_names[info[i].cnt-1], rinfo.clnt_names[0]);
 			rinfo.clnt_socks[rinfo.cnt-1] = clnt_sock;
 			write(clnt_sock, (void*)&rinfo, sizeof(rinfo));
