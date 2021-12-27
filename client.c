@@ -135,7 +135,8 @@ int main(int argc, char *argv[])
 	socket_init(&sock);
 	logInPage(sock);
 	chat_start(&sock);
-	close(sock);  
+	close(sock);
+	endwin();  
 	return 0;
 }
 
@@ -232,22 +233,15 @@ void createRoom(int sock, roominfo rinfo){
     //enter roomname
     //child process, receive portnum from Rmanage_serv.c
     roominfo sendinfo;
-    for(int i = 0; i < 10; i++){
-        str_len = read(sock, (void*)&sendinfo, sizeof(sendinfo));
-        if(sendinfo.cnt > 0){
-        printf("RoomName : %s cnt: %d/10 RoomNumber : %d ", sendinfo.roomName, sendinfo.cnt, sendinfo.roomnum);
-        printf("who : ");
-        for(int j=0; j < sendinfo.cnt; j++){
-            printf(" %s", sendinfo.clnt_names[j]);
-            if(j == sendinfo.cnt - 1){
-                printf("\n");
-            }
-            else{
-                printf(",");
-            }
-        }
-        printf("\n");
-    	}
+    for(int i=0; i<10; i++){
+	    str_len = read(sock, (void*)&sendinfo, sizeof(sendinfo));
+	    if(sendinfo.cnt > 0){
+	    printf("%s %d %d ", sendinfo.roomName, sendinfo.cnt, sendinfo.roomnum);
+	    for(int j=0; j<sendinfo.cnt; j++){
+		    printf("%s ", sendinfo.clnt_names[j]);
+	    }
+	    printf("\n");
+	    }
     }
     //input roomName
     printf("input your roomName to create: ");
@@ -282,22 +276,15 @@ void enterRoom(int sock){
     char enterRoomName[NAME_SIZE];   
     int str_len;
     roominfo sendinfo;
-    for(int i = 0; i < 10; i++){
-        str_len = read(sock, (void*)&sendinfo, sizeof(sendinfo));
-        if(sendinfo.cnt > 0){
-        printf("RoomName : %s cnt: %d/10 RoomNumber : %d ", sendinfo.roomName, sendinfo.cnt, sendinfo.roomnum);
-        printf("who : ");
-        for(int j=0; j < sendinfo.cnt; j++){
-            printf(" %s", sendinfo.clnt_names[j]);
-            if(j == sendinfo.cnt - 1){
-                printf("\n");
-            }
-            else{
-                printf(",");
-            }
-        }
-        printf("\n");
-        }
+    for(int i=0; i<10; i++){
+	    str_len = read(sock, (void*)&sendinfo, sizeof(sendinfo));
+	    if(sendinfo.cnt > 0){
+	    printf("%s %d %d ", sendinfo.roomName, sendinfo.cnt, sendinfo.roomnum);
+	    for(int j=0; j<sendinfo.cnt; j++){
+		    printf("%s ", sendinfo.clnt_names[j]);
+	    }
+	    printf("\n");
+	    }
     }
     //input roomName
     printf("input your roomName to enter : ");
@@ -349,6 +336,7 @@ void chat_start(int* sock){
 
 int msgcheck(char* msg)
 {
+	fflush(stdin);
 	if (!strcmp(msg, "afk\n"))
 	{
 		afk_mode = 1;
@@ -358,15 +346,17 @@ int msgcheck(char* msg)
 	{
 		for (int j = 0;j<i;j++)
 		{
-			fputs(disturb[j], stdout);
+			//fputs(disturb[j], stdout);
+			mvwprintw(tbox,tbox_c,0,disturb[j]);
+			tbox_c++;
 		}
 		i = 0;
 		afk_mode = 0;
 		return 1;
 	}
-	else if ( !strcmp(msg,"notice\n") ){
+	else if ( !strcmp(msg,"notice") ){
             	// color(noticebuffer);
-		fputs(noticebuffer,stdout);
+		mvwprintw(tbox,++tbox_c,0,noticebuffer);
 		return 2;
 	}
 	else if ( !strcmp(msg, "emoji\n") ){
@@ -445,9 +435,8 @@ void * send_msg(void * arg)   // send thread main
 	char name_msg[NAME_SIZE+BUF_SIZE];
 	char string[300];
 	while (1) {
-		
-		/*wrefresh(ibox);
-		wmove(ibox, 1, 0);*/
+		/*wrefresh(ibox);*/
+		wmove(ibox, 1, 0);
 		if (terminal(ibox, string, 280) == ERR) {
 			printf("terminal ERR\n");
 			escape(0);
@@ -456,22 +445,21 @@ void * send_msg(void * arg)   // send thread main
 			strcpy(msg, string);
 			int msgcheckNum = msgcheck(msg);
 			if(msgcheckNum == 1 || msgcheckNum == 2){ // afk
+				memset(string, 0, sizeof(string));
 				wclear(ibox);
-				wmove(ibox,1,0);
+				mvwprintw(pbox, 1, 0, "%c", ps);
+				wrefresh(pbox);
+				redraw(1);
+
 				continue;
 			}
 			if(msgcheckNum == -1){
+				close(sock);
 				strcpy(name_msg, "");
 				sprintf(name_msg, "%s is quit\n", name);
 				write(sock, name_msg, strlen(name_msg));
-				char exit_msg[3][25] = {
-					"Exit chatroom" ,
-					"connection break" ,
-					"server terminated" ,
-				};
 				endwin();
 				close(svr_fd);
-				//puts(exit_msg[idx]);
 				exit(0);
 			}
 			if(msgcheckNum == 3){
@@ -482,8 +470,7 @@ void * send_msg(void * arg)   // send thread main
 				strcpy(msg, emoji[emojiNum]);
 			}
 			make_msg(msg, name_msg);
-			write(sock, name_msg, strlen(name_msg));
-			
+			write(sock, name_msg, strlen(name_msg));		
 			/*strcpy(output, name_msg);
 
 			mvwaddstr(tbox, tbox_c,0,output);
@@ -500,15 +487,13 @@ void * send_msg(void * arg)   // send thread main
 			    tbox_c--;
 			   tbox_t++;
 			}*/
-			wclear(ibox);
-			
-			wmove(ibox,1,0);
+			//wclear(ibox);
 		}
-		/*memset(string, 0, sizeof(string));
+		memset(string, 0, sizeof(string));
 		wclear(ibox);
 		mvwprintw(pbox, 1, 0, "%c", ps);
 		wrefresh(pbox);
-		redraw(1);*/
+		redraw(1);
 	}
 
 /*	
@@ -524,14 +509,7 @@ void * send_msg(void * arg)   // send thread main
 			continue;
 		}
 		if(msgcheckNum == -1){
-			char exit_msg[3][25] = {
-				"Exit chatroom" ,
-				"connection break" ,
-				"server terminated" ,
-			};
-			endwin();
-			close(svr_fd);
-			puts(exit_msg[idx]);
+			close(sock);
 			exit(0);
 		}
 		if(msgcheckNum == 3){
@@ -549,12 +527,12 @@ void * send_msg(void * arg)   // send thread main
 }
 
 void make_msg(char* msg, char* name_msg){
-	//notice     ?    ?               ?   ?     
+	//notice     ?    ?               ?¨ö ?     
 	if(strstr(msg,"notice"))
 	{
 		sprintf(name_msg,"%s",msg);	
 	}
-	//    ?      ?   ?
+	//    ?      ?¨ö ?
 	else{
 		sprintf(name_msg,"%s %s", name, msg);
 	}
@@ -633,7 +611,8 @@ void * recv_msg(void * arg)   // read thread main
 			
 		if(strstr(name_msg,"notice"))
 		{
-			strcpy(noticebuffer,name_msg);	
+			strcpy(noticebuffer,name_msg);
+			mvwprintw(tbox, tbox_c++,0, noticebuffer);	
 		}
 		if(afk_mode ==1)
 		{
@@ -657,14 +636,12 @@ void * recv_msg(void * arg)   // read thread main
 		    	tbox_c--;
 			tbox_t++;
 		}
-
-
-	
-	memset(string, 0, sizeof(string));
-//	wclear(ibox);
-	mvwprintw(pbox, 1, 0, "%c", ps);
-	wrefresh(pbox);
-//	wmove(ibox,1,0);
+	//memset(string, 0, sizeof(string));
+	//wclear(ibox);
+	//mvwprintw(pbox, 1, 0, "%c", ps);
+	//wrefresh(pbox);
+	wmove(ibox,1,0);
+	usleep(10000);
 	redraw(1);
 	}
 }
@@ -683,7 +660,7 @@ void * recv_msg(void * arg)   // read thread main
 			{
 				strcpy(noticebuffer,name_msg);	
 			}
-			//afk_mode   1 ?   ?            ?               
+			//afk_mode   1 ?   ?      ò÷    ?     ¡Æ        
 			if(afk_mode ==1)
 			{
 			  strcpy(disturb[i],name_msg);
@@ -722,7 +699,16 @@ void color(char *msg){
 
 
 void escape(int idx) {
-	printf("\nif you want to terminate Chatting program enter 'q' or Q\n");
+/*	char exit_msg[3][25] = {
+		"Exit chatroom" ,
+		"connection break" ,
+		"server terminated" ,
+	};
+	endwin();
+	close(svr_fd);
+	puts(exit_msg[idx]);
+	exit(0);*/
+	printf("\nif you want to terminate Chatting program enter 'q' or 'Q'\n");
 }
 
 void initial(void) {
