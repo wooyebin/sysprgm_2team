@@ -23,4 +23,11 @@
 
 ## 개요
 <img width="300" alt="server" src="https://user-images.githubusercontent.com/48755335/147481680-d6c4b8f4-118e-47c9-98ad-3a055c93755c.png">
-<img width="400" alt="client" src="https://user-images.githubusercontent.com/48755335/147481694-f3edfe53-30c7-4e59-a2ce-97c66c724225.png">
+<img width="400" alt="client" src="https://user-images.githubusercontent.com/48755335/147483074-591a219f-0b98-4e43-a97b-0e21b7c0cd45.png">
+
+## code 설명
+### 함수 설명
+![f_server](https://user-images.githubusercontent.com/48755335/147483250-f889eb3c-86f0-49f5-acc3-62210d706aae.png)
+![f_client](https://user-images.githubusercontent.com/48755335/147483257-1a04f6a3-23cf-4f98-bbca-7d9092dfd282.png)
+
+
