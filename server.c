@@ -156,8 +156,11 @@ void * handle_clnt(void * arg)
 	str_len=read(clnt_sock, msg, sizeof(msg));
 	while((str_len=read(clnt_sock, msg, sizeof(msg)))!=0){
 		if ( quit_detection(msg) == 1){
+			printf("scuas\n");
 			send_msg(msg, str_len, clnt_sock);
 			delete(clnt_sock);
+			close(clnt_sock);
+			return NULL;
 		}
 		else{
 			send_msg(msg, str_len, clnt_sock);
@@ -202,16 +205,16 @@ void delete(int clnt_sock){
 		{
 			if(clnt_sock==info[j].clnt_socks[i])
 			{
-				printf("right\n");
 				while(i < info[j].cnt){
 					info[j].clnt_socks[i]=info[j].clnt_socks[i+1];
 					i++;
 				}
+				info[j].cnt--;
 				break;
 			}
 		}
-		info[j].cnt--;
 	}
+
 	pthread_mutex_unlock(&mutx);
 }
 
@@ -225,7 +228,7 @@ int quit_detection(char* msg){
 		while(msg[k] == quitMsg[j]){
 			k++; j++;
 		}
-		if (j==7 && strlen(msg)==k+1){
+		if (j==6){
 			return 1;
 		}
 		else{
