@@ -71,7 +71,7 @@ int emojiCount = 1;
 char emoji[1][100];
 
 
-//ÀÚ¸®ºñ¿ò   
+//Ã€ÃšÂ¸Â®ÂºÃ±Â¿Ã²   
 char disturb[300][300] = { "\0" };
 int i = 0;
 int didx = 0;
@@ -433,7 +433,7 @@ void * send_msg(void * arg)   // send thread main
 
 void make_msg(char* msg, char* name_msg) {
 	 
-	if (strstr(msg, "notice"))
+	if (strstr(msg, "notice:"))
 	{
 		sprintf(name_msg, "%s", msg);
 	}
@@ -514,7 +514,7 @@ void * recv_msg(void * arg)   // read thread main
 			return (void*)-1;
 		name_msg[str_len] = 0;
 
-		if (strstr(name_msg, "notice"))
+		if (strstr(name_msg, "notice:"))
 		{
 			strcpy(noticebuffer, name_msg);
 			mvwprintw(bbox, 1, 25, noticebuffer);
