@@ -22,4 +22,5 @@
 <pre><code>신예림 우예빈</code></pre>
 
 ## 개요
-
+<img width="300" alt="server" src="https://user-images.githubusercontent.com/48755335/147481680-d6c4b8f4-118e-47c9-98ad-3a055c93755c.png">
+<img width="400" alt="client" src="https://user-images.githubusercontent.com/48755335/147481694-f3edfe53-30c7-4e59-a2ce-97c66c724225.png">
