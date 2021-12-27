@@ -16,7 +16,8 @@
 #define BUF_SIZE 100
 #define MAX_CLNT 256
 #define ROOMCOUNT 10
-#define PORTNUMBER "9000"
+#define PORTNUMBER "9120"
+
 
 typedef struct {
     char roomName[20]; //chatroom name
@@ -27,7 +28,7 @@ typedef struct {
     char clnt_names[ROOMCOUNT][20];
 }roominfo;
 
-void init(int, char**);
+void init();
 void socket_init(int*);
 void chat_start(int*);
 void * handle_clnt(void * arg);
@@ -53,10 +54,10 @@ int roomnum = 0;
 roominfo info[ROOMCOUNT];
 
 
-int main(int argc, char *argv[])
+int main()
 {
 	int serv_sock;
-	init(argc, argv);
+	init();
 	socket_init(&serv_sock);	
 	chat_start(&serv_sock);	
 	close(serv_sock);
@@ -67,12 +68,8 @@ int main(int argc, char *argv[])
 
 ///////////////////////////////////////////////////////////
 
-void init(int argc, char** argv){
-	if(argc!=2) {
-		printf("Usage : %s <port>\n", argv[0]);
-		exit(1);
-	}
-	port = atoi(argv[1]);
+void init(){	
+	port = atoi(PORTNUMBER);
 }
 void socket_init(int* serv_sock){
 	struct sockaddr_in serv_adr;
@@ -155,7 +152,7 @@ void * handle_clnt(void * arg)
 
 	str_len=read(clnt_sock, msg, sizeof(msg));
 	while((str_len=read(clnt_sock, msg, sizeof(msg)))!=0){
-		if ( quit_detection(msg) == 1){
+		if ( strstr(msg, "is quit") ){
 			printf("scuas\n");
 			send_msg(msg, str_len, clnt_sock);
 			delete(clnt_sock);
@@ -187,7 +184,10 @@ void * handle_clnt(void * arg)
 }
 
 void delete(int clnt_sock){
+	int temp = 0;
+	int k = 0;
 	pthread_mutex_lock(&mutx);
+	printf("\ndelete function is started\n");
 	for(int i=0; i<clnt_cnt; i++)   // remove disconnected client
 	{
 		if(clnt_sock==clnt_socks[i])
@@ -199,26 +199,58 @@ void delete(int clnt_sock){
 			break;
 		}
 	}
+
 	clnt_cnt--;
+
 	for(int j=0; j<roomnum; j++){
 		for(int i=0; i<info[j].cnt; i++)   // remove disconnected client
 		{
 			if(clnt_sock==info[j].clnt_socks[i])
 			{
-				while(i < info[j].cnt){
-					info[j].clnt_socks[i]=info[j].clnt_socks[i+1];
-					i++;
+				temp = info[j].cnt -1;
+				if(temp == 0){
+					strcpy(info[j].roomName, "\0");
+					strcpy(info[j].clnt_names[0], "\0");
+					info[i].clnt_socks[0] = 0;
+					info[j].cnt = 0;										
+
+					temp = info[j].roomnum;
+					for(k = temp; k <ROOMCOUNT; k++){
+						if(info[k].roomnum > 0){
+							info[k].roomnum--;
+						}
+					}
+
+					printf("room destroyed!!\n");
+		
 				}
-				info[j].cnt--;
-				break;
+				else{
+					strcpy(info[j].clnt_names[temp], "\0");
+					info[j].clnt_socks[temp] = 0;
+					for(k = i; k< ROOMCOUNT; k++){
+						strcpy(info[j].clnt_names[k], info[j].clnt_names[k+1]);
+					}					
+					while(i < info[j].cnt){
+						info[j].clnt_socks[i]=info[j].clnt_socks[i+1];
+						i++;
+					}
+					info[j].cnt --;					
+					printf("right decrease\n");
+
+				}			
+
+				break;		
+
+
 			}
 		}
 	}
-
 	pthread_mutex_unlock(&mutx);
+	printf("\ndelete function is ended\n");
+
 }
 
-
+/*
 int quit_detection(char* msg){
 	char* quitMsg = "is quit";
 	int k=0, j=0;
@@ -237,7 +269,7 @@ int quit_detection(char* msg){
 	}
 	else return 0;
 }
-
+*/
 
 int command_detection(char* msg){
 //	char* command = "notice ";

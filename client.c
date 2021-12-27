@@ -17,6 +17,7 @@
 
 #define BUF_SIZE 100
 #define NAME_SIZE 20
+#define	PORTNUMBER	"9120"
 struct stat route;
 char command[250], send_str[250];
 /* GNU style struct initialization */
@@ -37,7 +38,7 @@ typedef struct {
 }roominfo;
 
 
-void init(int, char**);
+void init();
 void socket_init(int*);
 void logInPage(int sock);
 void showmenu(int sock);
@@ -137,14 +138,10 @@ int main(int argc, char *argv[])
 
 ////////////////////////////////////////////////////////////////////
 
-void init(int argc, char** argv) {
-	if (argc != 4) {
-		printf("Usage : %s <IP> <port> <name>\n", argv[0]);
-		exit(1);
-	}
-	sprintf(name, "[%s]", argv[3]);
-	strcpy(IP, argv[1]);
-	port = atoi(argv[2]);
+void init() {
+	strcpy(IP, "127.0.0.1");
+	port = atoi(PORTNUMBER);	
+	
 }
 
 void socket_init(int* sock) {
@@ -161,10 +158,12 @@ void socket_init(int* sock) {
 		error_handling("connect() error");
 }
 void logInPage(int sock) {
-
-	//enter NickName    
-	//printf("Show your NickName : ");
-	//fgets(name, BUF_SIZE, stdin);
+	char nickName[NAME_SIZE];
+	
+    	//enter NickName    
+	printf("Show your NickName : ");
+	scanf("%s",nickName);
+	sprintf(name, "[%s]", nickName);
 
 	showmenu(sock);
 }
@@ -383,7 +382,7 @@ int msgcheck(char* msg)
 		}
 		return 3;
 	}
-	else if (!strcmp(msg, "q") || !strcmp(msg, "Q")) {
+	else if (!strcmp(msg, "q\n") || !strcmp(msg, "Q\n")) {
 		return -1;
 	}
 
