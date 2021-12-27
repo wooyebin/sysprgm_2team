@@ -79,13 +79,13 @@ int emojiCount = 1;
 char emoji[1][100];
 
 
-//�ڸ� ��� ���õ� ����
+//자리 비움 관련된 것임
 char disturb[300][300]={"\0"};
 int i=0;
 int didx = 0;
 int afk_mode =0;
 
-//���� ����
+//공지 사항
 char noticebuffer[300];
 
 WINDOW *win[7],
@@ -335,6 +335,7 @@ void chat_start(int* sock){
 int msgcheck(char* msg)
 {
 	strcat(msg,"\n");
+	//자리비움 구현
 	if (!strcmp(msg, "afk\n"))
 	{
 		afk_mode = 1;
@@ -342,14 +343,17 @@ int msgcheck(char* msg)
 		redraw(1);
 		return 1;
 	}
+	//자리비움 해제
 	else if (!strcmp(msg, "nafk\n"))
 	{
 		for (int j = 0;j<didx;j++)
 		{
 			//fputs(disturb[j], stdout);
+			//함꺼번에 다 출력
 			mvwprintw(tbox,tbox_c,0,disturb[j]);
 			tbox_c++;
 		}
+		//출력하면 wclear하고 다시 그림을 그림
 		didx = 0;
 		afk_mode = 0;
 		wclear(ibox);
@@ -358,6 +362,7 @@ int msgcheck(char* msg)
 	}
 	else if ( !strcmp(msg,"notice\n") ){
             	// color(noticebuffer);
+		//notice 치고 문장을 작성하면 문장이 공지사항이 됨 tbox옆에 
 		mvwprintw(tbox,tbox_c,0,noticebuffer);
 		tbox_c++;
 		return 2;
@@ -417,10 +422,12 @@ void * send_msg(void * arg)   // send thread main
 			write(sock, name_msg, strlen(name_msg));		
 			
 		}
+		//이 부분 그림 그리는 순서를 바꾼 부분이다. 
 		memset(string, 0, sizeof(string));
 		wclear(ibox);
 		mvwprintw(pbox, 1, 0, "%c", ps);
 		wrefresh(pbox);
+		//send를 해주면서 다시 그림을 그려줌
 		redraw(1);
 	}
 
@@ -428,12 +435,12 @@ void * send_msg(void * arg)   // send thread main
 }
 
 void make_msg(char* msg, char* name_msg){
-	//notice�� ���� �̸� ���� ������ �Է½�Ű�� ��
+	//notice가 들어가면 이름 빼고 서버로 입력시키는 것
 	if(strstr(msg,"notice"))
 	{
 		sprintf(name_msg,"%s",msg);	
 	}
-	//�� �ܴ� �� �Է½�Ŵ
+	//그 외는 다 입력시킴
 	else{
 		sprintf(name_msg,"%s %s", name, msg);
 	}
@@ -537,7 +544,7 @@ void * recv_msg(void * arg)   // read thread main
 		    	tbox_c--;
 			tbox_t++;
 		}}
-	
+	//이 곳에 커서 위치를 바꿔주고 redraw로 다시 그림을 
 	wmove(ibox,1,0);
 	usleep(10000);
 	redraw(1);
