@@ -265,11 +265,8 @@ void createRoom(int sock, roominfo rinfo) {
 
 	// for testing
 	printf("recv roomnum : %d\n", rinfo.roomnum);
-	// because it is tcp, we have two option 1,2
 
-
-	//start chat
-	//chatting(chatclnt_sock, rinfo);
+	
 }
 void enterRoom(int sock) {
 	char enterRoomName[NAME_SIZE];
@@ -296,8 +293,7 @@ void enterRoom(int sock) {
 
 	//input roomName
 	printf("input your roomName to enter : ");
-
-	//fgets(enterRoomName, NAME_SIZE, stdin);          
+	
 	scanf("%s", enterRoomName);
 	char temp;
 	scanf("%c", &temp);
@@ -322,11 +318,7 @@ void enterRoom(int sock) {
 	else {
 		printf("write to chatclnt roomnum : %d \n", sendinfo.roomnum);
 	}
-
-	//close(sock);
-	//start chat
-
-	//chatting(chatclnt_sock, sendinfo);
+	
 }
 
 
